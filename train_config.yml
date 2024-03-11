@@ -1,0 +1,27 @@
+name: ai_enabled_choreography
+
+is_train: true
+use_graph: false
+
+train:
+  optim:
+    lr: !!float 1e-3
+    weight_decay: 0
+    betas: [0.9, 0.99]
+  
+  scheduler:
+    milestones: [2, 4, 6, 8, 10, 12]
+    gamma: 0.5
+
+  epochs: 14
+  batch_size: 256
+  seq_len: 1
+  vae:
+    latent_dim: 32
+    n_units: 32
+  reduced_joints: false
+  predicted_timesteps: 50
+  no_overlap: false
+
+logger:
+  print_freq: 100
