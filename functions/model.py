@@ -2,7 +2,7 @@ import torch
 import logging
 import importlib
 from torch.nn.parallel import DataParallel, DistributedDataParallel
-from functions.model_variants import VAELSTM, GNN
+from functions.model_variants import VAELSTM
 from functions.model_variants_static import VAELSTM_Static
 
 logger = logging.getLogger('ai_enabled_choreography')
@@ -13,18 +13,14 @@ class GenerativeModel:
         self.cfg = cfg
         self.is_train = cfg['is_train']
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.use_graph = cfg['use_graph']
         self.kl_weight = 0.0001
 
-        if not cfg['use_graph']:
-            self.network = VAELSTM_Static(seq_len=cfg['train']['seq_len'],
-                                   target_seq_len=cfg['train']['seq_len'] + cfg['train']['predicted_timesteps'], 
-                                   latent_dim=cfg['train']['vae']['latent_dim'], 
-                                   n_units=cfg['train']['vae']['n_units'], 
-                                   reduced_joints=cfg['train']['reduced_joints'],
-                                   device=self.device).to(self.device)
-        else:
-            self.network = GNN().to(self.device)
+        self.network = VAELSTM(seq_len=cfg['train']['seq_len'],
+                               latent_dim=cfg['train']['vae']['latent_dim'], 
+                               n_units=cfg['train']['vae']['n_units'], 
+                               reduced_joints=cfg['train']['reduced_joints'],
+                               device=self.device).to(self.device)
+
         self.loss = -1
 
         self.print_network(self.network)
@@ -65,24 +61,20 @@ class GenerativeModel:
         logger.info(net_str)
     
     def feed_data(self, data):
-        if not self.use_graph:
-            self.model_input = data['seq'].to(self.device)
-            # self.target = data['target'].to(self.device)
-        else:
-            pass
+        self.model_input = data['seq'][:, :, :, :3].to(self.device)
 
     def compute_loss(self, pred, mean, log_var):
         reconstruction_loss = torch.nn.MSELoss()
         l_reconstruction = reconstruction_loss(pred, self.model_input[:, :, :, :3]) * 2
         # 0.5 * torch.mean(torch.sum((self.model_input[:, :, :, :3] - pred) ** 2, dim=-1))
-        l_kl = -0.5 * torch.mean(torch.sum(1 + log_var - mean ** 2 - torch.exp(log_var), dim=-1)) * self.kl_weight
+        l_kl = -0.5 * torch.mean(torch.sum(1 + log_var - mean ** 2 - torch.exp(log_var), dim=-1), dim=0) * self.kl_weight
         l_total = l_reconstruction + l_kl
         return l_total
 
     def optimize_parameters(self):
         self.optimizer.zero_grad()
 
-        pred, mean, log_var = self.network(self.model_input)
+        pred, mean, log_var = self.network(self.model_input, is_train=True)
 
         self.loss = self.compute_loss(pred, mean, log_var)
 
@@ -98,11 +90,10 @@ class GenerativeModel:
         with torch.no_grad():
             for data in dataloader_val:
                 self.feed_data(data)
-                pred, mean, log_var = self.network(self.model_input)
+                pred, mean, log_var = self.network(self.model_input, is_train=False)
                 val_loss += self.compute_loss(pred, mean, log_var)
 
         val_loss /= len(dataloader_val)
-        logger.info(f'Validation error: {val_loss}')
         self.network.train()
         return val_loss
 
@@ -112,11 +103,10 @@ class GenerativeModel:
         with torch.no_grad():
             for data in dataloader_test:
                 self.feed_data(data)
-                pred, mean, log_var = self.network(self.model_input)
+                pred, mean, log_var = self.network(self.model_input, is_train=False)
                 test_loss += self.compute_loss(pred, mean, log_var)
 
         test_loss /= len(dataloader_test)
-        logger.info(f'Test error: {test_loss}')
         self.network.train()
         return test_loss
 

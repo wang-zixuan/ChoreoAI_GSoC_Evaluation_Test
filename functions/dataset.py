@@ -4,7 +4,7 @@ from torch_geometric.data import Data
 
 class MarielDataset(torch.utils.data.Dataset):
     'Characterizes a dataset for PyTorch'
-    def __init__(self, reduced_joints=False, xy_centering=True, seq_len=128, predicted_timesteps=1, file_path="data/mariel_*.npy", no_overlap=False, use_graph=False):
+    def __init__(self, reduced_joints=False, xy_centering=True, seq_len=128, file_path="data/mariel_*.npy", no_overlap=False):
         'Initialization'
         self.file_path      = file_path
         self.seq_len        = seq_len
@@ -14,8 +14,6 @@ class MarielDataset(torch.utils.data.Dataset):
         self.xy_centering   = xy_centering
         self.n_joints       = 53
         self.n_dim          = 6
-        self.predicted_timesteps = predicted_timesteps
-        self.use_graph = use_graph
         
         print("")
         
@@ -71,20 +69,8 @@ class MarielDataset(torch.utils.data.Dataset):
             # prediction_target = data[index: index + self.seq_len + self.predicted_timesteps]
 
         # [seq_len, joints, 6]
-        if not self.use_graph:
-            cur_data = {}
-            cur_data['seq'] = torch.Tensor(sequence)
-            # cur_data['target'] = torch.Tensor(prediction_target)
-            return cur_data
-
-        sequence = np.transpose(sequence, [1, 0, 2]) # put n_joints first
-        sequence = sequence.reshape((data.shape[1], self.n_dim * self.seq_len)) # flatten n_dim * seq_len into one dimension (i.e. node feature)
-        prediction_target = np.transpose(prediction_target, [1, 0, 2]) # put n_joints first
-        prediction_target = prediction_target.reshape((data.shape[1], self.n_dim * (self.seq_len + self.predicted_timesteps))) 
-
-        # Convert to torch objects
-        sequence = torch.Tensor(sequence)
-        prediction_target = torch.Tensor(prediction_target)
-        edge_attr = torch.Tensor(is_skeleton_edge)
-
-        return Data(x=sequence, y=prediction_target, edge_index=edge_index.t().contiguous(), edge_attr=edge_attr)
+        cur_data = {}
+        cur_data['seq'] = torch.Tensor(sequence)
+        # cur_data['target'] = torch.Tensor(prediction_target)
+        return cur_data
+    
