@@ -18,14 +18,26 @@ I trained two modelw using static images and sequences separately. Currently, th
 - `seq_len=64`, no overlap
 
 ### Model design
-The model contains an encoder and a decoder, where the encoder consists 2 LSTM layers, 2 linear layers for mean and log variance in the latent space. In the decoder, I designed a linear layer with ReLU activation, 2 LSTM layers, and an output smooth layer. `latent_dim` is set to 256 and `n_units` is set to 394. Two separate models with `seq_len=64` and `seq_len=1` are trained. 
+The model contains an encoder and a decoder, where the encoder consists 2 LSTM layers, 2 linear layers for mean and log variance in the latent space. In the decoder, I designed a linear layer with ReLU activation, 2 LSTM layers, and an output smooth layer.
 
-I also tested with adding rotation layer to achieve data augmentation, but it showed no performance improvement. Also, due to time limit and GPU memory limit, I could only train with non-overlapping data with `seq_len=64`.
+In both encoder and decoder, I tested different values of `latent_dim` and `n_units`, beginning with 32. Finally I choose `latent_dim` to be 256 and `n_units` to be 394. 
+
+I also used the reparameterization trick to reformulate the sampling step into a differentiable operation. 
+
+Furthermore, I tested with adding rotation layer to achieve data augmentation, but it showed no performance improvement. Also, due to time limit and GPU memory limit, I could only train with non-overlapping data with `seq_len=64`.
+
+Two separate models with `seq_len=64` and `seq_len=1` were trained with MSE loss and KL divergence loss. The model was trained with `500` epochs with Adam optimizer and multi-step learning rate scheduler when `seq_len=64`, and trained with `200` epochs when `seq_len=1`.
 
 ### Results
 ![Alt text](image-1.png)
 ![Alt text](image.png)
 The above two figures show the training loss and evaluation loss when I train the model with `seq_len=64`. The training loss stabilized around `0.05`.  
+
+The generated result now showed a jittery fashion, propably due to limited `seq_len` during training. However, I believe the model managed to learn the core features of the input.
+
+When I generated new data conditioned on the test sequence, if $\sigma$ increased, the output would have some variations with the original input, demonstrating the capability of the model to sample from the latent space and reconstruct a sequence.
+
+When I generated new data randomly, the model trained with static images was not able to generate resonable sequence. This was mainly due to the fact that the model only learned 2D data and didn't see any temporal information.
 
 ## Part 3: Why this project?
 ### My interest in this project
