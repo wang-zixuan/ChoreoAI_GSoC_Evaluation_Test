@@ -31,7 +31,7 @@ Two separate models with `seq_len=64` and `seq_len=1` were trained with MSE loss
 ### Results
 ![Alt text](image-1.png)
 ![Alt text](image.png)
-The above two figures show the training loss and evaluation loss when I train the model with `seq_len=64`. The training loss stabilized around `0.05`.  
+The above two figures show the training loss and evaluation loss when I trained the model with `seq_len=64` using wandb tool. The training loss stabilized around `0.05`.  
 
 The generated result now showed a jittery fashion, propably due to limited `seq_len` during training. However, I believe the model managed to learn the core features of the input.
 
