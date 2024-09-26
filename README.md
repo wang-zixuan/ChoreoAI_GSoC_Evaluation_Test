@@ -1,7 +1,7 @@
 # AI-Generated Choreography - from Solos to Duets
 
 ## Introduction
-This is the submission for GSoC [AI-Enabled Choreography](https://humanai.foundation/gsoc/2024/proposal_ChoreoAI1.html). In this project, I trained a generative model using VAE + LSTM layers to generate new sequences of a dancer.
+This is the submission for GSoC [AI-Generated Choreography](https://humanai.foundation/gsoc/2024/proposal_ChoreoAI1.html). In this project, I trained a generative model using VAE + LSTM layers to generate new sequences of a dancer.
 
 ## Part 1: Visualize the data
 I followed [this repo](https://github.com/mariel-pettee/choreo-graph/blob/main/functions/plotting.py) to visualize motion capture [data](https://github.com/mariel-pettee/choreo-graph/tree/main/data). The code provides visualization of `seq` and `ghost` in a 3D space, which is convenient for us to view the difference between original sequence and generated sequence.
